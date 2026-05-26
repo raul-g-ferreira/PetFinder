@@ -1,0 +1,7 @@
+{
+  "name": "petfinder",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}
