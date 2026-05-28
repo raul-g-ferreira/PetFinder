@@ -1,20 +1,76 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
     <ion-title>
-      Blank
+      PetFinder
     </ion-title>
   </ion-toolbar>
 </ion-header>
-
 <ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
-    </ion-toolbar>
-  </ion-header>
-
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
-  </div>
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)" pullFactor="0.8" pullMin="80" pullMax="120">
+    <ion-refresher-content
+      pullingIcon="chevron-down-circle-outline"
+      pullingText="Arraste para atualizar"
+      refreshingSpinner="circles"
+      refreshingText="Atualizando...">
+    </ion-refresher-content>
+  </ion-refresher>
+  <ion-searchbar
+    placeholder="Buscar por descrição ou contato..."
+    [(ngModel)]="searchTerm"
+    (ionInput)="applyFilters()"
+    [debounce]="300"
+    showCancelButton="never"
+    animated="true">
+  </ion-searchbar>
+  <ion-segment
+    [value]="selectedType"
+    (ionChange)="onTypeFilterChange($event.detail.value)"
+    scrollable="true">
+    <ion-segment-button [value]="null">
+      <ion-label>Todos</ion-label>
+    </ion-segment-button>
+    @for (type of petTypes; track type) {
+      <ion-segment-button [value]="type">
+        <ion-label>{{ type }}</ion-label>
+      </ion-segment-button>
+    }
+  </ion-segment>
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button (click)="addCard()">
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
+  @for (pet of filteredPetCards; track pet.id) {
+    <ion-card>
+      <ion-button (click)="abrirOpcoes(pet)" fill="clear" shape="round" style="position: absolute; top: 5px; right: 5px; z-index: 10;">
+        <ion-icon slot="icon-only" name="ellipsis-vertical"></ion-icon>
+      </ion-button>
+      @if (pet.photoUrl) {
+        <img [src]="pet.photoUrl" style="width: 100%; height: 200px; object-fit: cover;" />
+      }
+      <ion-card-header>
+        <ion-card-title>
+          <ion-badge color="secondary">{{ pet.type }}</ion-badge>
+        </ion-card-title>
+        <ion-note>Visto em: {{ pet.timestamp | date: 'dd/MM/yyyy HH:mm' }}</ion-note>
+      </ion-card-header>
+      <ion-card-content>
+        <p><strong>Descrição:</strong> {{ pet.description || 'Sem descrição informada.' }}</p>
+        <p><strong>Contato:</strong> {{ pet.contact }}</p>
+        <p style="font-size: 11px; color: var(--ion-color-medium); margin-top: 8px;">
+          <ion-icon name="location-outline"></ion-icon> Coordenadas: {{ pet.latitude }}, {{ pet.longitude }}
+        </p>
+      </ion-card-content>
+    </ion-card>
+  } @empty {
+    <div style="text-align: center; margin-top: 50px; color: var(--ion-color-medium);">
+      <ion-icon name="paw-outline" style="font-size: 64px;"></ion-icon>
+      <p>Nenhum pet encontrado com os filtros aplicados.</p>
+      @if (searchTerm.trim() !== '' || selectedType !== null) {
+        <ion-button (click)="clearFilters()" fill="outline">
+          Mostrar todos
+        </ion-button>
+      }
+    </div>
+  }
 </ion-content>

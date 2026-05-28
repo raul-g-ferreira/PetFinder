@@ -1,4 +1,6 @@
+import { DatabaseService } from './services/database.service';
 import { Component } from '@angular/core';
+import { Platform } from '@ionic/angular';
 
 @Component({
   selector: 'app-root',
@@ -7,5 +9,16 @@ import { Component } from '@angular/core';
   standalone: false,
 })
 export class AppComponent {
-  constructor() {}
+  constructor(
+    private platform: Platform,
+    private databaseService: DatabaseService
+  ) {
+    this.inicializarApp()
+  }
+
+  async inicializarApp() {
+    await this.platform.ready()
+
+    await this.databaseService.inicializarBanco()
+  }
 }

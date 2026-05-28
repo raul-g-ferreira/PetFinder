@@ -1,0 +1,107 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>Encontrei um pet</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="cancel()">
+        <ion-icon name="close-outline"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+  </ion-toolbar>
+</ion-header>
+<ion-content [fullscreen]="true">
+  <form [formGroup]="formPetCard" (ngSubmit)="confirm()">
+    <ion-list>
+      <ion-item>
+        <ion-label position="stacked">Descrição</ion-label>
+        <ion-textarea formControlName="description"
+          placeholder="Adicione informações que podem ajudar a encontrar o tutor, como nome, idade, características físicas, etc."
+          auto-grow="true" rows="3">
+        </ion-textarea>
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Categoria</ion-label>
+        <ion-select formControlName="type" placeholder="Selecione" text-align="start" required="true">
+          @for (type of petTypes; track type) {
+          <ion-select-option value="{{ type }}">{{ type }}</ion-select-option>
+          }
+        </ion-select>
+        @if (formPetCard.get('type')?.touched && formPetCard.get('type')?.invalid) {
+        <ion-note color="danger">
+          Selecione uma categoria.
+        </ion-note>
+        }
+      </ion-item>
+      <ion-item>
+        <ion-label position="stacked">Contato</ion-label>
+        <ion-input formControlName="contact" type="tel" [disabled]="isTakingPhoto"
+          placeholder="Ex: (44) 99999-9999"></ion-input>
+        @if (formPetCard.get('contact')?.touched && formPetCard.get('contact')?.invalid) {
+        <ion-note color="danger">
+          Contato inválido ou inexistente.
+        </ion-note>
+        }
+      </ion-item>
+      @if (position) {
+      <ion-item lines="none">
+        <ion-label>Localização obtida:
+          <ion-text color="success">
+            {{ position.coords.latitude.toFixed(4) }}, {{ position.coords.longitude.toFixed(4) }}
+          </ion-text>
+        </ion-label>
+      </ion-item>
+      } @else {
+        <ion-item>
+          <ion-label>Carregando localização</ion-label>
+          <ion-spinner name="circles"></ion-spinner>
+        </ion-item>
+      }
+      @if ( locationError && !position ) {
+      <ion-item color="danger">
+        <ion-label>{{ locationError }}</ion-label>
+        <ion-button (click)="ngOnInit()" fill="clear" size="small" slot="end">
+          Tentar novamente
+        </ion-button>
+      </ion-item>
+      }
+      <ion-grid>
+      @if (hasPhoto) {
+          <ion-row>
+            <ion-col size="12">
+              <ion-img [src]="card.photoUrl" syle="width: 100%; border-radius: 8px;" />
+            </ion-col>
+          </ion-row>
+          <ion-row>
+            <ion-col size="12">
+              <ion-button (click)="removePhoto()" expand="block" color="danger">
+                Remover Foto
+              </ion-button>
+            </ion-col>
+          </ion-row>
+        }@else {
+          <ion-row>
+            <ion-col size="12">
+              <ion-button (click)="onTakePhoto()" expand="block" [disabled]="isTakingPhoto">
+                <ion-icon name="camera-outline"></ion-icon>
+                Tirar Foto
+              </ion-button>
+            </ion-col>
+          </ion-row>
+          @if (photoError) {
+            <ion-row>
+              <ion-col size="12">
+                <ion-label>{{ photoError }}</ion-label>
+              </ion-col>
+            </ion-row>
+          }
+        }
+      </ion-grid>
+    </ion-list>
+  </form>
+</ion-content>
+<ion-footer>
+  <ion-toolbar>
+    <ion-button (click)="confirm()" expand="block" color="success" [disabled]="formPetCard.invalid || isGettingLocation || isTakingPhoto">
+      Salvar
+    </ion-button>
+  </ion-toolbar>
+</ion-footer>
