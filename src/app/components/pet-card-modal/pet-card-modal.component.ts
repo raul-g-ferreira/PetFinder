@@ -102,7 +102,7 @@ export class PetCardModalComponent implements OnInit {
       if (photo.base64String) {
         this.card.photoUrl = `data:image/jpeg;base64,${photo.base64String}`
         this.hasPhoto = true
-      } else if (photo.webPath) { // quando cai pra webpath?
+      } else if (photo.webPath) {
         this.card.photoUrl = photo.webPath
         this.hasPhoto = true
       }
