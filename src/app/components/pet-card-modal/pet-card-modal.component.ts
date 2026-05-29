@@ -1,17 +1,19 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, NgZone } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Geolocation, Position } from '@capacitor/geolocation';
 import { ModalController } from '@ionic/angular';
+import { IonicModule } from '@ionic/angular';
+import { ReactiveFormsModule } from '@angular/forms';
 import { PetType } from 'src/app/models/enums/pet-type';
 import { PetCard } from './../../models/pet-card.model';
-
 
 @Component({
   selector: 'app-pet-card-modal',
   templateUrl: './pet-card-modal.component.html',
   styleUrls: ['./pet-card-modal.component.scss'],
-  standalone: false
+  standalone: true,
+  imports: [IonicModule, ReactiveFormsModule]
 })
 export class PetCardModalComponent implements OnInit {
 
@@ -30,6 +32,7 @@ export class PetCardModalComponent implements OnInit {
   constructor(
     private modalController: ModalController,
     private fb: FormBuilder,
+    private ngZone: NgZone
   ) { }
 
   async ngOnInit() {
@@ -37,28 +40,32 @@ export class PetCardModalComponent implements OnInit {
       description: ['', []],
       type: ['', [Validators.required]],
       contact: ['', [Validators.required, Validators.pattern(/^[\d\s\-\(\)]+$/)]]
-    })
+    });
 
-    try {
-      this.isGettingLocation = true
-      this.locationError = null
+    await this.ngZone.runOutsideAngular(async () => {
+      try {
+        this.isGettingLocation = true
+        this.locationError = null
 
-      const status = await Geolocation.checkPermissions()
-      if (status.location !== 'granted') {
-        const request = await Geolocation.requestPermissions()
-        if (request.location !== 'granted') {
-          throw new Error('Permissão de localização não concedida');
+        const status = await Geolocation.checkPermissions()
+        if (status.location !== 'granted') {
+          const request = await Geolocation.requestPermissions()
+          if (request.location !== 'granted') {
+            throw new Error('Permissão de localização não concedida');
+          }
         }
-      }
 
-      this.position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 })
-    } catch (error: any) {
-      console.error('Erro ao obter localização', error)
-      this.locationError = error.message || 'Não foi possível obter a localização.'
-      this.position = null
-    } finally {
-      this.isGettingLocation = false
-    }
+        this.position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 10000 })
+      } catch (error: any) {
+        console.error('Erro ao obter localização', error)
+        this.locationError = error.message || 'Não foi possível obter a localização.'
+        this.position = null
+      } finally {
+        this.ngZone.run(() => {
+          this.isGettingLocation = false
+        });
+      }
+    });
   }
 
   cancel() {
@@ -92,12 +99,12 @@ export class PetCardModalComponent implements OnInit {
       this.isTakingPhoto = true
       this.photoError = null
 
-      const photo = await Camera.getPhoto({
-        quality: 90,
-        allowEditing: false,
-        resultType: CameraResultType.Base64,
-        source: CameraSource.Camera
-      })
+    const photo = await Camera.getPhoto({
+      quality: 75,
+      allowEditing: false,
+      resultType: CameraResultType.Base64,
+      source: CameraSource.Camera
+    })
 
       if (photo.base64String) {
         this.card.photoUrl = `data:image/jpeg;base64,${photo.base64String}`

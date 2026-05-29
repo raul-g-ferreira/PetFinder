@@ -1,10 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Clipboard } from '@capacitor/clipboard';
 import { ActionSheetController, AlertController, ModalController } from '@ionic/angular';
-import { PetCardModalComponent } from '../components/pet-card-modal/pet-card-modal.component';
 import { PetCard } from '../models/pet-card.model';
 import { DatabaseService } from './../services/database.service';
 import { PetType } from '../models/enums/pet-type';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-home',
@@ -12,46 +12,16 @@ import { PetType } from '../models/enums/pet-type';
   styleUrls: ['home.page.scss'],
   standalone: false,
 })
-export class HomePage implements OnInit{
+export class HomePage implements OnInit, OnDestroy {
 
-  petCards: PetCard[] = [
-    // {
-    //   id: '1',
-    //   description: 'Cachorro perdido encontrado na rua.',
-    //   type: 'Cachorro',
-    //   photoUrl: 'https://picsum.photos/500/300',
-    //   latitude: -23.55052,
-    //   longitude: -46.633308,
-    //   contact: '(11) 99999-9999',
-    //   timestamp: new Date()
-    // },
-    // {
-    //   id: '2',
-    //   description: 'Gato encontrado no parque.',
-    //   type: 'Gato',
-    //   photoUrl: 'https://picsum.photos/502/300',
-    //   latitude: -23.55052,
-    //   longitude: -46.633308,
-    //   contact: '(11) 99999-9999',
-    //   timestamp: new Date()
-    // },
-    // {
-    //   id: '3',
-    //   description: 'Pássaro encontrado na praça.',
-    //   type: 'Passaro',
-    //   photoUrl: 'https://picsum.photos/501/300',
-    //   latitude: -23.55052,
-    //   longitude: -46.633308,
-    //   contact: '(11) 99999-9999',
-    //   timestamp: new Date()
-    // }
-  ]
+  petCards: PetCard[] = []
   filteredPetCards: PetCard[] = []
   searchTerm: string = ''
   selectedType: PetType | null = null
   isLoading: boolean = false
 
   petTypes = Object.values(PetType)
+  private dbReadySubscription!: Subscription;
 
   constructor(
     private modalController: ModalController,
@@ -63,12 +33,20 @@ export class HomePage implements OnInit{
 
   ngOnInit(): void {
     this.selectedType = null
+  }
 
-    this.databaseService.isDbReady.subscribe(async (estaPronto) => {
+  ionViewDidEnter() {
+    this.dbReadySubscription = this.databaseService.isDbReady.subscribe(async (estaPronto) => {
       if (estaPronto) {
         await this.loadPetCards();
       }
     });
+  }
+
+  ngOnDestroy() {
+    if (this.dbReadySubscription) {
+      this.dbReadySubscription.unsubscribe();
+    }
   }
 
   async loadPetCards() {
@@ -110,6 +88,7 @@ export class HomePage implements OnInit{
   }
 
   async addCard() {
+    const { PetCardModalComponent } = await import('../components/pet-card-modal/pet-card-modal.component');
     const modal = await this.modalController.create({
       component: PetCardModalComponent
     });
@@ -134,14 +113,6 @@ export class HomePage implements OnInit{
             this.copyToClipboard(pet.contact)
           }
         },
-        // {
-        //   text: 'Copiar coordenadas',
-        //   icon: 'location-outline',
-        //   handler: () => {
-        //     this.copyToClipboard(`${pet.latitude} ${pet.longitude}`)
-        //     console.log('copiando coordenadas:', pet.latitude, pet.longitude);
-        //   }
-        // },
         {
           text: 'Abrir no mapa',
           icon: 'map-outline',
